@@ -1,215 +1,91 @@
-// Importa o React e o useState para armazenar os dados digitados
 import React, { useState } from "react";
+// ANOTAÇÃO: Importa o 'Platform' para diferenciar o comportamento do alerta no Navegador vs Celular
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from "react-native";
+import { cadastrarUsuario } from "../database";
 
-// Importa componentes visuais do React Native
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+export default function CadastroScreen({ navigation, theme }) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
 
-// Importa o AsyncStorage para salvar e recuperar dados do celular
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Componente principal da tela de login
-export default function LoginScreen({
-  navigation,
-  theme,
-}) {
-
-  // Armazena o email digitado
-  const [email, setEmail] =
-    useState("");
-
-  // Armazena a senha digitada
-  const [senha, setSenha] =
-    useState("");
-
-  // Função executada quando o usuário clica em Entrar
-  async function fazerLogin() {
-
-    // Busca o usuário salvo no celular
-    const usuario =
-      await AsyncStorage.getItem(
-        "usuario"
-      );
-
-    // Verifica se existe usuário cadastrado
-    if (!usuario) {
-      Alert.alert(
-        "Erro",
-        "Nenhum usuário cadastrado."
-      );
+  function fazerCadastro() {
+    if (!nome || !email || !senha) {
+      if (Platform.OS === "web") {
+        alert("Erro: Preencha todos os campos.");
+      } else {
+        Alert.alert("Erro", "Preencha todos os campos.");
+      }
       return;
     }
 
-    // Converte os dados salvos para objeto
-    const dados = JSON.parse(usuario);
+    // Executa a inserção dos dados no banco/localStorage
+    const resultado = cadastrarUsuario(nome, email, senha);
 
-    // Verifica se email e senha estão corretos
-    if (
-      email === dados.email &&
-      senha === dados.senha
-    ) {
-
-      // Vai para a tela da lista de livros
-      navigation.navigate("Lista");
-
+    if (resultado.sucesso) {
+      // ANOTAÇÃO: Se for ambiente Web, usa o alert comum e navega. Se for celular, usa o Alert nativo com botão.
+      if (Platform.OS === "web") {
+        alert("Sucesso: Usuário cadastrado com sucesso!");
+        navigation.navigate("Login");
+      } else {
+        Alert.alert("Sucesso", "Usuário cadastrado com sucesso!", [
+          { text: "OK", onPress: () => navigation.navigate("Login") },
+        ]);
+      }
     } else {
-
-      // Mostra mensagem de erro
-      Alert.alert(
-        "Erro",
-        "Email ou senha incorretos."
-      );
-
+      if (Platform.OS === "web") {
+        alert(`Erro: ${resultado.erro}`);
+      } else {
+        Alert.alert("Erro", resultado.erro);
+      }
     }
   }
 
   return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.titulo, { color: theme.text }]}>Criar Conta</Text>
 
-    // Container principal da tela
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor:
-            theme.background,
-        },
-      ]}
-    >
-
-      {/* Título do aplicativo */}
-      <Text
-        style={[
-          styles.titulo,
-          {
-            color: theme.text,
-          },
-        ]}
-      >
-        Biblioteca Virtual
-      </Text>
-
-      {/* Campo de email */}
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor:
-              theme.input,
-          },
-        ]}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+        style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
+        placeholder="Nome"
+        placeholderTextColor="#888"
+        value={nome}
+        onChangeText={setNome}
       />
 
-      {/* Campo de senha */}
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor:
-              theme.input,
-          },
-        ]}
+        style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
+        placeholder="Email"
+        placeholderTextColor="#888"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+      />
+
+      <TextInput
+        style={[styles.input, { backgroundColor: theme.input, color: theme.text }]}
         placeholder="Senha"
+        placeholderTextColor="#888"
         secureTextEntry
         value={senha}
         onChangeText={setSenha}
       />
 
-      {/* Botão de login */}
-      <TouchableOpacity
-        style={[
-          styles.botao,
-          {
-            backgroundColor:
-              theme.primary,
-          },
-        ]}
-        onPress={fazerLogin}
-      >
-        <Text
-          style={styles.botaoTexto}
-        >
-          Entrar
-        </Text>
+      <TouchableOpacity style={[styles.botao, { backgroundColor: theme.primary }]} onPress={fazerCadastro}>
+        <Text style={styles.botaoTexto}>Cadastrar</Text>
       </TouchableOpacity>
 
-      {/* Link para tela de cadastro */}
-      <TouchableOpacity
-        onPress={() =>
-          navigation.navigate(
-            "Cadastro"
-          )
-        }
-      >
-        <Text
-          style={[
-            styles.link,
-            {
-              color:
-                theme.primary,
-            },
-          ]}
-        >
-          Criar conta
-        </Text>
+      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+        <Text style={[styles.link, { color: theme.primary }]}>Já tenho conta</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
 
-// Estilos da tela
 const styles = StyleSheet.create({
-
-  // Container principal
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-
-  // Título
-  titulo: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 30,
-  },
-
-  // Campos de entrada
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15,
-  },
-
-  // Botão entrar
-  botao: {
-    padding: 15,
-    borderRadius: 10,
-  },
-
-  // Texto do botão
-  botaoTexto: {
-    color: "#fff",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-
-  // Link criar conta
-  link: {
-    textAlign: "center",
-    marginTop: 20,
-    fontWeight: "bold",
-  },
+  container: { flex: 1, justifyContent: "center", padding: 20 },
+  titulo: { fontSize: 30, fontWeight: "bold", textAlign: "center", marginBottom: 30 },
+  input: { borderWidth: 1, borderColor: "#ddd", borderRadius: 10, padding: 12, marginBottom: 15 },
+  botao: { padding: 15, borderRadius: 10 },
+  botaoTexto: { color: "#fff", textAlign: "center", fontWeight: "bold" },
+  link: { textAlign: "center", marginTop: 20, fontWeight: "bold" },
 });

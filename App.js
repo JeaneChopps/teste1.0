@@ -1,148 +1,80 @@
-// Importa o React e o useState para controlar o modo escuro
-import React, { useState } from "react";
-
-// Importa componentes visuais do React Native
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-} from "react-native";
-
-// Importa a navegação entre telas
+import React, { useState, useEffect } from "react";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-// Importa as telas do aplicativo
+import HomeScreen from "./screens/HomeScreen"; // Importando a nova Home
 import LoginScreen from "./screens/LoginScreen";
 import CadastroScreen from "./screens/CadastroScreen";
 import ListaScreen from "./screens/ListaScreen";
 import SobreScreen from "./screens/SobreScreen";
 
-// Importa os temas claro e escuro
-import {
-  lightTheme,
-  darkTheme,
-} from "./theme";
+import { lightTheme, darkTheme } from "./theme";
+import { inicializarBanco } from "./database";
 
-// Cria a pilha de navegação
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [darkMode, setDarkMode] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState(null); 
 
-  // Controla se o modo escuro está ativo
-  const [darkMode, setDarkMode] =
-    useState(false);
+  const theme = darkMode ? darkTheme : lightTheme;
 
-  // Escolhe qual tema será utilizado
-  const theme = darkMode
-    ? darkTheme
-    : lightTheme;
+  useEffect(() => {
+    inicializarBanco();
+  }, []);
 
   return (
     <>
-      {/* Container principal da navegação */}
       <NavigationContainer>
-
         <Stack.Navigator
+          initialRouteName="Home"
           screenOptions={{
-            // Cor da barra superior
-            headerStyle: {
-              backgroundColor:
-                theme.primary,
-            },
-
-            // Cor dos textos da barra superior
+            headerStyle: { backgroundColor: theme.primary },
             headerTintColor: "#fff",
           }}
         >
+          {/* Tela Principal do App */}
+          <Stack.Screen name="Home" options={{ headerShown: false }}>
+            {(props) => <HomeScreen {...props} theme={theme} />}
+          </Stack.Screen>
 
-          {/* Tela de Login */}
-          <Stack.Screen name="Login">
+          <Stack.Screen name="Login" options={{ title: "Identificação" }}>
             {(props) => (
-              <LoginScreen
-                {...props}
-                theme={theme}
-              />
+              <LoginScreen {...props} theme={theme} setUsuarioLogado={setUsuarioLogado} />
             )}
           </Stack.Screen>
 
-          {/* Tela de Cadastro */}
-          <Stack.Screen name="Cadastro">
-            {(props) => (
-              <CadastroScreen
-                {...props}
-                theme={theme}
-              />
-            )}
+          <Stack.Screen name="Cadastro" options={{ title: "Nova Conta" }}>
+            {(props) => <CadastroScreen {...props} theme={theme} />}
           </Stack.Screen>
 
-          {/* Tela da Lista de Livros */}
-          <Stack.Screen name="Lista">
+          <Stack.Screen name="Lista" options={{ title: "Loja de Livros" }}>
             {(props) => (
               <ListaScreen
                 {...props}
                 theme={theme}
+                usuarioLogado={usuarioLogado}
+                setUsuarioLogado={setUsuarioLogado}
               />
             )}
           </Stack.Screen>
 
-          {/* Tela Sobre */}
-          <Stack.Screen name="Sobre">
-            {(props) => (
-              <SobreScreen
-                {...props}
-                theme={theme}
-              />
-            )}
+          <Stack.Screen name="Sobre" options={{ title: "Sobre o Desenvolvedor" }}>
+            {(props) => <SobreScreen {...props} theme={theme} />}
           </Stack.Screen>
-
         </Stack.Navigator>
-
       </NavigationContainer>
 
-      {/* Botão flutuante para alternar tema */}
-      <TouchableOpacity
-        style={[
-          styles.botaoTema,
-          {
-            backgroundColor:
-              theme.primary,
-          },
-        ]}
-        onPress={() =>
-          setDarkMode(!darkMode)
-        }
-      >
-        <Text style={styles.icone}>
-          🌙
-        </Text>
+      {/* Botão Flutuante do Tema Escuro */}
+      <TouchableOpacity style={[styles.botaoTema, { backgroundColor: theme.primary }]} onPress={() => setDarkMode(!darkMode)}>
+        <Text style={styles.icone}>🌙</Text>
       </TouchableOpacity>
     </>
   );
 }
 
-// Estilos da tela
 const styles = StyleSheet.create({
-
-  // Botão flutuante
-  botaoTema: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-
-    width: 60,
-    height: 60,
-
-    borderRadius: 30,
-
-    justifyContent: "center",
-    alignItems: "center",
-
-    elevation: 5,
-  },
-
-  // Emoji do botão
-  icone: {
-    fontSize: 24,
-  },
+  botaoTema: { position: "absolute", bottom: 20, right: 20, width: 60, height: 60, borderRadius: 30, justifyContent: "center", alignItems: "center", elevation: 5 },
+  icone: { fontSize: 24 },
 });
